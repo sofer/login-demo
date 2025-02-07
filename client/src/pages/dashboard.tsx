@@ -5,10 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 
+interface AuthResponse {
+  email: string;
+}
+
 export default function Dashboard() {
   const [, navigate] = useLocation();
 
-  const query = useQuery({
+  const query = useQuery<AuthResponse>({
     queryKey: ["/api/auth/me"],
     retry: false,
   });

@@ -7,6 +7,13 @@ import { sendMagicLink } from "./email";
 import session from "express-session";
 import MemoryStore from "memorystore";
 
+// Declare session type to include email
+declare module "express-session" {
+  interface SessionData {
+    email?: string;
+  }
+}
+
 const SessionStore = MemoryStore(session);
 
 export function registerRoutes(app: Express): Server {
@@ -26,7 +33,7 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const data = insertUserSchema.parse(req.body);
-      
+
       let user = await storage.getUserByEmail(data.email);
       if (!user) {
         user = await storage.createUser(data);
@@ -43,7 +50,7 @@ export function registerRoutes(app: Express): Server {
       });
 
       await sendMagicLink(data.email, token);
-      
+
       res.json({ message: "Magic link sent" });
     } catch (error) {
       res.status(400).json({ message: "Invalid email" });
@@ -52,22 +59,22 @@ export function registerRoutes(app: Express): Server {
 
   app.get("/api/auth/verify", async (req, res) => {
     const { token } = req.query;
-    
+
     if (typeof token !== "string") {
       return res.status(400).json({ message: "Invalid token" });
     }
 
     const magicLink = await storage.getMagicLinkByToken(token);
-    
+
     if (!magicLink || magicLink.used || magicLink.expiresAt < new Date()) {
       return res.status(400).json({ message: "Invalid or expired token" });
     }
 
     await storage.markMagicLinkAsUsed(token);
     await storage.verifyUser(magicLink.email);
-    
+
     req.session.email = magicLink.email;
-    
+
     res.json({ message: "Verified successfully" });
   });
 
