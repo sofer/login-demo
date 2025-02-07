@@ -15,17 +15,23 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  
+
   const {
     data: user,
     error,
     isLoading,
-  } = useQuery<User | null>({
+  } = useQuery<User>({
     queryKey: ["/api/auth/me"],
     queryFn: async () => {
       try {
         const res = await apiRequest("GET", "/api/auth/me");
-        return res.json();
+        const data = await res.json();
+        // Return a properly formatted User object
+        return {
+          id: 0, // Since we don't use this field
+          email: data.email,
+          isVerified: true // If we got the user data, they must be verified
+        };
       } catch (error) {
         if (error instanceof Error && error.message.includes("401")) {
           return null;

@@ -39,7 +39,10 @@ export default function Verify() {
 
   useEffect(() => {
     if (query.isSuccess) {
-      navigate("/dashboard");
+      // Redirect to dashboard after successful verification
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1500); // Short delay to show success message
     }
   }, [query.isSuccess, navigate]);
 
@@ -76,8 +79,17 @@ export default function Verify() {
       <Card className="w-full max-w-md">
         <CardContent className="pt-6">
           <div className="flex flex-col items-center space-y-4">
-            <Loader2 className="h-8 w-8 animate-spin" />
-            <p className="text-center">Verifying your email...</p>
+            {query.isSuccess ? (
+              <>
+                <p className="text-center text-green-600">Email verified successfully!</p>
+                <p className="text-sm text-muted-foreground">Redirecting to dashboard...</p>
+              </>
+            ) : (
+              <>
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <p className="text-center">Verifying your email...</p>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
