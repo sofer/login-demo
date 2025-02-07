@@ -4,6 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+import { DeploymentStatus } from "@/components/ui/deployment-status";
 
 interface AuthResponse {
   email: string;
@@ -44,7 +45,10 @@ export default function Dashboard() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Welcome!</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl font-bold">Welcome!</CardTitle>
+            <DeploymentStatus />
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-gray-500">

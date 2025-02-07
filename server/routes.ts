@@ -30,6 +30,11 @@ export function registerRoutes(app: Express): Server {
     }
   }));
 
+  // Add health check endpoint
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   app.post("/api/auth/login", async (req, res) => {
     try {
       const data = insertUserSchema.parse(req.body);
