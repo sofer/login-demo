@@ -8,11 +8,18 @@ import { apiRequest } from "@/lib/queryClient";
 export default function Verify() {
   const [, navigate] = useLocation();
   const [location] = useLocation();
-  const token = new URLSearchParams(location.split("?")[1]).get("token");
+
+  // Enhanced token extraction with logging
+  const searchParams = location.includes('?') ? location.split("?")[1] : '';
+  const token = new URLSearchParams(searchParams).get("token");
+  console.log("Verification attempt with token:", token);
 
   const query = useQuery({
     queryKey: ["/api/auth/verify", token],
     queryFn: async () => {
+      if (!token) {
+        throw new Error("No verification token provided");
+      }
       const response = await apiRequest("GET", `/api/auth/verify?token=${token}`);
       return response.json();
     },
@@ -31,7 +38,9 @@ export default function Verify() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
-            <p className="text-center text-red-500">Invalid verification link</p>
+            <p className="text-center text-red-500">
+              Invalid verification link. No token provided.
+            </p>
           </CardContent>
         </Card>
       </div>
