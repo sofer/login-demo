@@ -10,11 +10,11 @@ export default function Verify() {
   const [location] = useLocation();
 
   // Enhanced token extraction with detailed logging
-  const searchParams = location.includes('?') ? location.split("?")[1] : '';
-  const urlParams = new URLSearchParams(searchParams);
-  const token = urlParams.get("token");
-  console.log("Current location:", location);
-  console.log("Search params:", searchParams);
+  const searchParams = new URLSearchParams(window.location.search);
+  const token = searchParams.get("token");
+  console.log("Full URL:", window.location.href);
+  console.log("Location from wouter:", location);
+  console.log("Search params:", window.location.search);
   console.log("Extracted token:", token);
 
   const query = useQuery({
@@ -49,7 +49,7 @@ export default function Verify() {
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <p className="text-center text-red-500">
-              No verification token found in URL
+              No verification token found in URL. Please check your email link.
             </p>
           </CardContent>
         </Card>
