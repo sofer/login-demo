@@ -18,8 +18,8 @@ const SessionStore = MemoryStore(session);
 
 export function registerRoutes(app: Express): Server {
   const isProduction = process.env.NODE_ENV === 'production';
+  console.log('Setting up session middleware with production mode:', isProduction);
 
-  // Configure session middleware with proper security settings
   app.use(session({
     store: new SessionStore({
       checkPeriod: 86400000 // prune expired entries every 24h
@@ -27,15 +27,13 @@ export function registerRoutes(app: Express): Server {
     secret: process.env.REPL_ID || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
-    proxy: true, // Trust the reverse proxy
     cookie: { 
-      secure: isProduction, // Use secure cookies in production
-      sameSite: isProduction ? 'none' : 'lax', // Allow cross-site cookie in production
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      path: '/',
+      secure: isProduction,
+      sameSite: 'none',
       httpOnly: true,
-      domain: isProduction ? '.replit.app' : undefined // Set domain for production
-    }
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    },
+    proxy: true
   }));
 
   // Add health check endpoint
@@ -77,51 +75,31 @@ export function registerRoutes(app: Express): Server {
 
   app.get("/api/auth/verify", async (req, res) => {
     try {
-      console.log("Starting verification process");
-      console.log("Query parameters:", req.query);
       const { token } = req.query;
 
-      console.log("Verifying token:", token);
-      console.log("Token type:", typeof token);
-
       if (typeof token !== "string" || !token) {
-        console.log("Invalid token format or missing token");
         return res.status(400).json({ message: "Invalid token format" });
       }
 
-      console.log("Fetching magic link from database");
       const magicLink = await storage.getMagicLinkByToken(token);
-      console.log("Magic link found:", magicLink);
 
       if (!magicLink) {
-        console.log("No magic link found for token");
         return res.status(400).json({ message: "Invalid token" });
       }
 
       if (magicLink.used) {
-        console.log("Token already used");
         return res.status(400).json({ message: "Token already used" });
       }
 
-      const currentTime = new Date();
-      console.log("Current time:", currentTime);
-      console.log("Token expires at:", magicLink.expiresAt);
-
-      if (magicLink.expiresAt < currentTime) {
-        console.log("Token expired");
+      if (magicLink.expiresAt < new Date()) {
         return res.status(400).json({ message: "Token expired" });
       }
 
-      console.log("Marking magic link as used");
       await storage.markMagicLinkAsUsed(token);
-
-      console.log("Verifying user");
       await storage.verifyUser(magicLink.email);
 
-      console.log("Setting session email:", magicLink.email);
       req.session.email = magicLink.email;
 
-      console.log("Saving session");
       await new Promise<void>((resolve, reject) => {
         req.session.save((err) => {
           if (err) {
@@ -133,7 +111,6 @@ export function registerRoutes(app: Express): Server {
         });
       });
 
-      console.log("Verification successful");
       res.json({ message: "Verified successfully" });
     } catch (error) {
       console.error("Verification error:", error);
