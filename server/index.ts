@@ -4,6 +4,12 @@ import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 
 const app = express();
+
+// Trust proxies in production (required for secure cookies behind Replit's proxy)
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

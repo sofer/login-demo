@@ -17,6 +17,9 @@ declare module "express-session" {
 const SessionStore = MemoryStore(session);
 
 export function registerRoutes(app: Express): Server {
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // Configure session middleware with proper security settings
   app.use(session({
     store: new SessionStore({
       checkPeriod: 86400000 // prune expired entries every 24h
@@ -24,9 +27,14 @@ export function registerRoutes(app: Express): Server {
     secret: process.env.REPL_ID || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
+    proxy: true, // Trust the reverse proxy
     cookie: { 
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      secure: isProduction, // Use secure cookies in production
+      sameSite: isProduction ? 'none' : 'lax', // Allow cross-site cookie in production
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      path: '/',
+      httpOnly: true,
+      domain: isProduction ? '.replit.app' : undefined // Set domain for production
     }
   }));
 
@@ -144,6 +152,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/auth/me", (req, res) => {
+    console.log("Session data:", req.session);
     if (!req.session.email) {
       return res.status(401).json({ message: "Not authenticated" });
     }
