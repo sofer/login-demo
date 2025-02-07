@@ -7,7 +7,18 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Logging middleware
+// Debug logging middleware for environment variables
+app.use((req, _res, next) => {
+  if (req.path === '/api/auth/login') {
+    log('Environment Variables:');
+    log(`REPL_SLUG: ${process.env.REPL_SLUG}`);
+    log(`REPL_ID: ${process.env.REPL_ID}`);
+    log(`NODE_ENV: ${process.env.NODE_ENV}`);
+  }
+  next();
+});
+
+// Response logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -71,9 +82,9 @@ app.use((req, res, next) => {
   const PORT = 5000;
   server.listen(PORT, "0.0.0.0", () => {
     log(`Server running on port ${PORT}`);
-    // Log the current environment and domain
     log(`Environment: ${app.get("env")}`);
     log(`REPL_SLUG: ${process.env.REPL_SLUG || 'Not in Replit'}`);
     log(`REPL_ID: ${process.env.REPL_ID || 'Not in Replit'}`);
+    log(`NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
   });
 })();

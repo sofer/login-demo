@@ -15,10 +15,15 @@ export async function sendMagicLink(email: string, token: string) {
     // Determine the base URL based on the environment
     let baseUrl: string;
 
+    console.log('Environment variables for URL construction:');
+    console.log(`REPL_ID: ${process.env.REPL_ID}`);
+    console.log(`REPL_SLUG: ${process.env.REPL_SLUG}`);
+    console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
+
     if (process.env.REPL_ID && process.env.REPL_SLUG) {
       // We're in a Replit environment
-      baseUrl = `https://${process.env.REPL_SLUG}.replit.app`;
-      console.log(`Constructing Replit URL: ${baseUrl}`);
+      baseUrl = `https://login-demo.replit.app`;  // Hardcode the correct app name
+      console.log(`Using Replit URL: ${baseUrl}`);
     } else {
       // Local development
       baseUrl = 'http://localhost:5000';
