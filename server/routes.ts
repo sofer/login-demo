@@ -129,11 +129,15 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/auth/me", (req, res) => {
-    console.log("Session data:", req.session);
+    console.log("Session data on /me endpoint:", req.session);
     if (!req.session.email) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    res.json({ email: req.session.email });
+    res.json({ 
+      id: 0,  // Since we're using email-based auth
+      email: req.session.email,
+      isVerified: true 
+    });
   });
 
   const httpServer = createServer(app);

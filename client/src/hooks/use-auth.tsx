@@ -26,23 +26,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const res = await apiRequest("GET", "/api/auth/me");
         if (!res.ok) {
-          throw new Error("Not authenticated");
+          if (res.status === 401) {
+            return null;
+          }
+          throw new Error("Authentication failed");
         }
         const data = await res.json();
         return {
-          id: 0,
+          id: data.id || 0,
           email: data.email,
           isVerified: true
         };
       } catch (error) {
-        if (error instanceof Error && error.message.includes("401")) {
-          return null;
-        }
-        throw error;
+        console.error("Auth error:", error);
+        return null;
       }
     },
     retry: false,
     staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: true
   });
 
   const logoutMutation = useMutation({
