@@ -21,7 +21,7 @@ export function registerRoutes(app: Express): Server {
     store: new SessionStore({
       checkPeriod: 86400000 // prune expired entries every 24h
     }),
-    secret: 'your-secret-key',
+    secret: process.env.REPL_ID || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
     cookie: { 
@@ -37,16 +37,19 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/auth/login", async (req, res) => {
     try {
+      console.log("Login attempt with data:", req.body);
       const data = insertUserSchema.parse(req.body);
 
       let user = await storage.getUserByEmail(data.email);
       if (!user) {
+        console.log("Creating new user for email:", data.email);
         user = await storage.createUser(data);
       }
 
       const token = randomBytes(32).toString('hex');
       const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
 
+      console.log("Creating magic link with token:", token);
       await storage.createMagicLink({
         token,
         email: data.email,
@@ -54,6 +57,7 @@ export function registerRoutes(app: Express): Server {
         used: false
       });
 
+      console.log("Sending magic link to email:", data.email);
       await sendMagicLink(data.email, token);
 
       res.json({ message: "Magic link sent" });
@@ -65,44 +69,63 @@ export function registerRoutes(app: Express): Server {
 
   app.get("/api/auth/verify", async (req, res) => {
     try {
+      console.log("Starting verification process");
+      console.log("Query parameters:", req.query);
       const { token } = req.query;
 
-      console.log("Verifying token:", token); // Debug log
+      console.log("Verifying token:", token);
+      console.log("Token type:", typeof token);
 
       if (typeof token !== "string" || !token) {
-        console.log("Invalid token format"); // Debug log
+        console.log("Invalid token format or missing token");
         return res.status(400).json({ message: "Invalid token format" });
       }
 
+      console.log("Fetching magic link from database");
       const magicLink = await storage.getMagicLinkByToken(token);
-      console.log("Magic link found:", magicLink); // Debug log
+      console.log("Magic link found:", magicLink);
 
       if (!magicLink) {
-        console.log("No magic link found for token"); // Debug log
+        console.log("No magic link found for token");
         return res.status(400).json({ message: "Invalid token" });
       }
 
       if (magicLink.used) {
-        console.log("Token already used"); // Debug log
+        console.log("Token already used");
         return res.status(400).json({ message: "Token already used" });
       }
 
-      if (magicLink.expiresAt < new Date()) {
-        console.log("Token expired"); // Debug log
+      const currentTime = new Date();
+      console.log("Current time:", currentTime);
+      console.log("Token expires at:", magicLink.expiresAt);
+
+      if (magicLink.expiresAt < currentTime) {
+        console.log("Token expired");
         return res.status(400).json({ message: "Token expired" });
       }
 
+      console.log("Marking magic link as used");
       await storage.markMagicLinkAsUsed(token);
+
+      console.log("Verifying user");
       await storage.verifyUser(magicLink.email);
 
+      console.log("Setting session email:", magicLink.email);
       req.session.email = magicLink.email;
+
+      console.log("Saving session");
       await new Promise<void>((resolve, reject) => {
         req.session.save((err) => {
-          if (err) reject(err);
-          else resolve();
+          if (err) {
+            console.error("Session save error:", err);
+            reject(err);
+          } else {
+            resolve();
+          }
         });
       });
 
+      console.log("Verification successful");
       res.json({ message: "Verified successfully" });
     } catch (error) {
       console.error("Verification error:", error);
@@ -113,6 +136,7 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/auth/logout", (req, res) => {
     req.session.destroy(err => {
       if (err) {
+        console.error("Logout error:", err);
         return res.status(500).json({ message: "Error logging out" });
       }
       res.json({ message: "Logged out successfully" });

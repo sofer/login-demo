@@ -22,7 +22,7 @@ export async function sendMagicLink(email: string, token: string) {
 
     if (process.env.REPL_ID && process.env.REPL_SLUG) {
       // We're in a Replit environment
-      baseUrl = `https://login-demo-dsofer.replit.app`;  // Use the correct Replit domain
+      baseUrl = `https://${process.env.REPL_SLUG}.${process.env.REPL_ID}.repl.co`;  // Use dynamic Replit domain
       console.log(`Using Replit URL: ${baseUrl}`);
     } else {
       // Local development
