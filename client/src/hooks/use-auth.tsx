@@ -25,12 +25,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       try {
         const res = await apiRequest("GET", "/api/auth/me");
+        if (!res.ok) {
+          throw new Error("Not authenticated");
+        }
         const data = await res.json();
-        // Return a properly formatted User object
         return {
-          id: 0, // Since we don't use this field
+          id: 0,
           email: data.email,
-          isVerified: true // If we got the user data, they must be verified
+          isVerified: true
         };
       } catch (error) {
         if (error instanceof Error && error.message.includes("401")) {
@@ -39,6 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     },
+    retry: false,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const logoutMutation = useMutation({

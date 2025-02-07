@@ -2,12 +2,24 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, Loader2 } from "lucide-react";
 import { DeploymentStatus } from "@/components/ui/deployment-status";
 
 export default function Dashboard() {
   const [, navigate] = useLocation();
-  const { user, logoutMutation } = useAuth();
+  const { user, isLoading, logoutMutation } = useAuth();
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Redirect to login if not authenticated
   if (!user) {
