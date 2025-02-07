@@ -20,14 +20,17 @@ export async function sendMagicLink(email: string, token: string) {
     console.log(`REPL_SLUG: ${process.env.REPL_SLUG}`);
     console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
 
-    if (process.env.REPL_ID && process.env.REPL_SLUG) {
-      // We're in a Replit environment
-      baseUrl = `https://${process.env.REPL_SLUG}.${process.env.REPL_ID}.repl.co`;  // Use dynamic Replit domain
-      console.log(`Using Replit URL: ${baseUrl}`);
+    if (process.env.NODE_ENV === 'production') {
+      // We're in production
+      baseUrl = 'https://login-demo-dsofer.replit.app';
+      console.log(`Using production URL: ${baseUrl}`);
     } else {
-      // Local development
+      // Local development or dev environment
       baseUrl = 'http://localhost:5000';
-      console.log(`Using local URL: ${baseUrl}`);
+      if (process.env.REPL_ID && process.env.REPL_SLUG) {
+        baseUrl = `https://${process.env.REPL_SLUG}.${process.env.REPL_ID}.repl.co`;
+      }
+      console.log(`Using development URL: ${baseUrl}`);
     }
 
     // Construct the verification URL
