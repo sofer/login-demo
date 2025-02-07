@@ -1,4 +1,6 @@
 import { users, magicLinks, type User, type InsertUser, type MagicLink, type InsertMagicLink } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
@@ -9,62 +11,52 @@ export interface IStorage {
   verifyUser(email: string): Promise<void>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private magicLinks: Map<number, MagicLink>;
-  private currentUserId: number;
-  private currentLinkId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.magicLinks = new Map();
-    this.currentUserId = 1;
-    this.currentLinkId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id, isVerified: false };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.email === email,
-    );
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email));
+    return user;
   }
 
   async createMagicLink(insertLink: InsertMagicLink): Promise<MagicLink> {
-    const id = this.currentLinkId++;
-    const link: MagicLink = { ...insertLink, id };
-    this.magicLinks.set(id, link);
+    const [link] = await db
+      .insert(magicLinks)
+      .values(insertLink)
+      .returning();
     return link;
   }
 
   async getMagicLinkByToken(token: string): Promise<MagicLink | undefined> {
-    return Array.from(this.magicLinks.values()).find(
-      (link) => link.token === token,
-    );
+    const [link] = await db
+      .select()
+      .from(magicLinks)
+      .where(eq(magicLinks.token, token));
+    return link;
   }
 
   async markMagicLinkAsUsed(token: string): Promise<void> {
-    const link = Array.from(this.magicLinks.values()).find(
-      (link) => link.token === token,
-    );
-    if (link) {
-      link.used = true;
-    }
+    await db
+      .update(magicLinks)
+      .set({ used: true })
+      .where(eq(magicLinks.token, token));
   }
 
   async verifyUser(email: string): Promise<void> {
-    const user = Array.from(this.users.values()).find(
-      (user) => user.email === email,
-    );
-    if (user) {
-      user.isVerified = true;
-    }
+    await db
+      .update(users)
+      .set({ isVerified: true })
+      .where(eq(users.email, email));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
