@@ -9,10 +9,13 @@ export default function Verify() {
   const [, navigate] = useLocation();
   const [location] = useLocation();
 
-  // Enhanced token extraction with logging
+  // Enhanced token extraction with detailed logging
   const searchParams = location.includes('?') ? location.split("?")[1] : '';
-  const token = new URLSearchParams(searchParams).get("token");
-  console.log("Verification attempt with token:", token);
+  const urlParams = new URLSearchParams(searchParams);
+  const token = urlParams.get("token");
+  console.log("Current location:", location);
+  console.log("Search params:", searchParams);
+  console.log("Extracted token:", token);
 
   const query = useQuery({
     queryKey: ["/api/auth/verify", token],
@@ -20,8 +23,15 @@ export default function Verify() {
       if (!token) {
         throw new Error("No verification token provided");
       }
-      const response = await apiRequest("GET", `/api/auth/verify?token=${token}`);
-      return response.json();
+      try {
+        const response = await apiRequest("GET", `/api/auth/verify?token=${token}`);
+        const data = await response.json();
+        console.log("Verification response:", data);
+        return data;
+      } catch (error) {
+        console.error("Verification error:", error);
+        throw error;
+      }
     },
     enabled: !!token,
     retry: false,
@@ -39,7 +49,7 @@ export default function Verify() {
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <p className="text-center text-red-500">
-              Invalid verification link. No token provided.
+              No verification token found in URL
             </p>
           </CardContent>
         </Card>
@@ -53,7 +63,7 @@ export default function Verify() {
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <p className="text-center text-red-500">
-              {query.error?.message || "Invalid or expired verification link"}
+              {query.error instanceof Error ? query.error.message : "Verification failed"}
             </p>
           </CardContent>
         </Card>
