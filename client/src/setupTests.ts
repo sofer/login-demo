@@ -2,10 +2,14 @@ import '@testing-library/jest-dom';
 import { afterAll, afterEach, beforeAll } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import { setupServer } from 'msw/node';
-import { rest } from 'msw';
+import { http } from 'msw';
 
 // Add default handlers here if needed
-export const handlers = [];
+export const handlers = [
+  http.get('/api/auth/me', () => {
+    return new Response(null, { status: 401 });
+  }),
+];
 
 export const server = setupServer(...handlers);
 

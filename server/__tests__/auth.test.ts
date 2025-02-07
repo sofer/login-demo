@@ -1,11 +1,15 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-import express from 'express';
+import express, { type Express } from 'express';
 import { registerRoutes } from '../routes';
 
 describe('Authentication API', () => {
-  const app = express();
-  registerRoutes(app);
+  let app: Express;
+
+  beforeAll(() => {
+    app = express();
+    registerRoutes(app);
+  });
 
   it('returns 401 when not authenticated', async () => {
     const response = await request(app).get('/api/auth/me');
@@ -17,7 +21,7 @@ describe('Authentication API', () => {
       const response = await request(app)
         .post('/api/auth/login')
         .send({ email: 'invalid-email' });
-      
+
       expect(response.status).toBe(400);
     });
 
@@ -25,7 +29,7 @@ describe('Authentication API', () => {
       const response = await request(app)
         .post('/api/auth/login')
         .send({ email: 'test@example.com' });
-      
+
       expect(response.status).toBe(200);
     });
   });
@@ -35,7 +39,7 @@ describe('Authentication API', () => {
       const response = await request(app)
         .get('/api/auth/verify')
         .query({ token: 'invalid-token' });
-      
+
       expect(response.status).toBe(400);
     });
   });

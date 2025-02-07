@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/hooks/use-auth';
 import Login from '../login';
 import { server } from '../../setupTests';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({
@@ -26,8 +26,8 @@ function wrapper({ children }: { children: React.ReactNode }) {
 describe('Login Page', () => {
   beforeEach(() => {
     server.use(
-      rest.get('/api/auth/me', (req, res, ctx) => {
-        return res(ctx.status(401));
+      http.get('/api/auth/me', () => {
+        return new HttpResponse(null, { status: 401 });
       })
     );
   });
@@ -41,16 +41,16 @@ describe('Login Page', () => {
 
   it('handles successful login submission', async () => {
     server.use(
-      rest.post('/api/auth/login', (req, res, ctx) => {
-        return res(ctx.status(200));
+      http.post('/api/auth/login', () => {
+        return new HttpResponse(null, { status: 200 });
       })
     );
 
     render(<Login />, { wrapper });
-    
+
     const emailInput = screen.getByLabelText('Email');
     await userEvent.type(emailInput, 'test@example.com');
-    
+
     const submitButton = screen.getByRole('button', { name: /Send Magic Link/i });
     await userEvent.click(submitButton);
 
@@ -61,16 +61,19 @@ describe('Login Page', () => {
 
   it('handles login errors', async () => {
     server.use(
-      rest.post('/api/auth/login', (req, res, ctx) => {
-        return res(ctx.status(400), ctx.json({ message: 'Invalid email' }));
+      http.post('/api/auth/login', () => {
+        return new HttpResponse(
+          JSON.stringify({ message: 'Invalid email' }), 
+          { status: 400 }
+        );
       })
     );
 
     render(<Login />, { wrapper });
-    
+
     const emailInput = screen.getByLabelText('Email');
     await userEvent.type(emailInput, 'invalid');
-    
+
     const submitButton = screen.getByRole('button', { name: /Send Magic Link/i });
     await userEvent.click(submitButton);
 
