@@ -58,29 +58,56 @@ export function registerRoutes(app: Express): Server {
 
       res.json({ message: "Magic link sent" });
     } catch (error) {
+      console.error("Login error:", error);
       res.status(400).json({ message: "Invalid email" });
     }
   });
 
   app.get("/api/auth/verify", async (req, res) => {
-    const { token } = req.query;
+    try {
+      const { token } = req.query;
 
-    if (typeof token !== "string") {
-      return res.status(400).json({ message: "Invalid token" });
+      console.log("Verifying token:", token); // Debug log
+
+      if (typeof token !== "string" || !token) {
+        console.log("Invalid token format"); // Debug log
+        return res.status(400).json({ message: "Invalid token format" });
+      }
+
+      const magicLink = await storage.getMagicLinkByToken(token);
+      console.log("Magic link found:", magicLink); // Debug log
+
+      if (!magicLink) {
+        console.log("No magic link found for token"); // Debug log
+        return res.status(400).json({ message: "Invalid token" });
+      }
+
+      if (magicLink.used) {
+        console.log("Token already used"); // Debug log
+        return res.status(400).json({ message: "Token already used" });
+      }
+
+      if (magicLink.expiresAt < new Date()) {
+        console.log("Token expired"); // Debug log
+        return res.status(400).json({ message: "Token expired" });
+      }
+
+      await storage.markMagicLinkAsUsed(token);
+      await storage.verifyUser(magicLink.email);
+
+      req.session.email = magicLink.email;
+      await new Promise<void>((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
+      res.json({ message: "Verified successfully" });
+    } catch (error) {
+      console.error("Verification error:", error);
+      res.status(500).json({ message: "Verification failed" });
     }
-
-    const magicLink = await storage.getMagicLinkByToken(token);
-
-    if (!magicLink || magicLink.used || magicLink.expiresAt < new Date()) {
-      return res.status(400).json({ message: "Invalid or expired token" });
-    }
-
-    await storage.markMagicLinkAsUsed(token);
-    await storage.verifyUser(magicLink.email);
-
-    req.session.email = magicLink.email;
-
-    res.json({ message: "Verified successfully" });
   });
 
   app.post("/api/auth/logout", (req, res) => {

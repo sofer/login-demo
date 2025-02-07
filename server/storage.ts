@@ -13,6 +13,7 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
+    console.log("Creating user:", insertUser); // Debug log
     const [user] = await db
       .insert(users)
       .values(insertUser)
@@ -21,6 +22,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
+    console.log("Getting user by email:", email); // Debug log
     const [user] = await db
       .select()
       .from(users)
@@ -29,6 +31,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createMagicLink(insertLink: InsertMagicLink): Promise<MagicLink> {
+    console.log("Creating magic link:", insertLink); // Debug log
     const [link] = await db
       .insert(magicLinks)
       .values(insertLink)
@@ -37,14 +40,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMagicLinkByToken(token: string): Promise<MagicLink | undefined> {
+    console.log("Getting magic link by token:", token); // Debug log
     const [link] = await db
       .select()
       .from(magicLinks)
       .where(eq(magicLinks.token, token));
+    console.log("Found magic link:", link); // Debug log
     return link;
   }
 
   async markMagicLinkAsUsed(token: string): Promise<void> {
+    console.log("Marking magic link as used:", token); // Debug log
     await db
       .update(magicLinks)
       .set({ used: true })
@@ -52,6 +58,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async verifyUser(email: string): Promise<void> {
+    console.log("Verifying user:", email); // Debug log
     await db
       .update(users)
       .set({ isVerified: true })
