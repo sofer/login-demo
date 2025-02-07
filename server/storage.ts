@@ -13,7 +13,7 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
-    console.log("Creating user:", insertUser); // Debug log
+    console.log("Creating user:", insertUser);
     const [user] = await db
       .insert(users)
       .values(insertUser)
@@ -22,7 +22,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    console.log("Getting user by email:", email); // Debug log
+    console.log("Getting user by email:", email);
     const [user] = await db
       .select()
       .from(users)
@@ -31,7 +31,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createMagicLink(insertLink: InsertMagicLink): Promise<MagicLink> {
-    console.log("Creating magic link:", insertLink); // Debug log
+    console.log("Creating magic link, first cleaning up old links for email:", insertLink.email);
+
+    // Delete any existing magic links for this email
+    await db
+      .delete(magicLinks)
+      .where(eq(magicLinks.email, insertLink.email));
+
+    console.log("Creating new magic link");
     const [link] = await db
       .insert(magicLinks)
       .values(insertLink)
@@ -40,17 +47,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMagicLinkByToken(token: string): Promise<MagicLink | undefined> {
-    console.log("Getting magic link by token:", token); // Debug log
+    console.log("Getting magic link by token:", token);
     const [link] = await db
       .select()
       .from(magicLinks)
       .where(eq(magicLinks.token, token));
-    console.log("Found magic link:", link); // Debug log
+    console.log("Found magic link:", link);
     return link;
   }
 
   async markMagicLinkAsUsed(token: string): Promise<void> {
-    console.log("Marking magic link as used:", token); // Debug log
+    console.log("Marking magic link as used:", token);
     await db
       .update(magicLinks)
       .set({ used: true })
@@ -58,7 +65,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async verifyUser(email: string): Promise<void> {
-    console.log("Verifying user:", email); // Debug log
+    console.log("Verifying user:", email);
     await db
       .update(users)
       .set({ isVerified: true })
