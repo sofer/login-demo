@@ -14,7 +14,7 @@ export async function sendMagicLink(email: string, token: string) {
   try {
     // For Replit environment, construct the correct domain
     const baseUrl = process.env.REPL_ID 
-      ? `https://${process.env.REPL_SLUG || 'email-communication-tool-dsofer'}.repl.co`
+      ? `https://${process.env.REPL_SLUG || 'login-demo'}.repl.co`
       : 'http://localhost:5000';
 
     // Construct the verification URL
