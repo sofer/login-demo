@@ -12,13 +12,12 @@ const transporter = nodemailer.createTransport({
 
 export async function sendMagicLink(email: string, token: string) {
   try {
-    // Use Replit's environment variables to construct the correct URL
-    const replitSlug = process.env.REPL_SLUG;
-    const replitOwner = process.env.REPL_OWNER;
-    const baseUrl = replitSlug && replitOwner 
-      ? `https://${replitSlug}.${replitOwner}.repl.co`
+    // Get the current domain from environment
+    const baseUrl = process.env.REPL_SLUG
+      ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`
       : 'http://localhost:5000';
 
+    // Construct the verification URL
     const verifyUrl = `${baseUrl}/verify?token=${token}`;
 
     await transporter.sendMail({
