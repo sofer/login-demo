@@ -1,21 +1,17 @@
 import { useEffect } from "react";
-import { useLocation, useLocation as useNavigate } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function Verify() {
   const [, navigate] = useLocation();
-  const [location] = useLocation();
+  const queryClient = useQueryClient();
 
   // Enhanced token extraction with detailed logging
   const searchParams = new URLSearchParams(window.location.search);
   const token = searchParams.get("token");
-  console.log("Full URL:", window.location.href);
-  console.log("Location from wouter:", location);
-  console.log("Search params:", window.location.search);
-  console.log("Extracted token:", token);
 
   const query = useQuery({
     queryKey: ["/api/auth/verify", token],
@@ -26,7 +22,6 @@ export default function Verify() {
       try {
         const response = await apiRequest("GET", `/api/auth/verify?token=${token}`);
         const data = await response.json();
-        console.log("Verification response:", data);
         return data;
       } catch (error) {
         console.error("Verification error:", error);
@@ -39,12 +34,14 @@ export default function Verify() {
 
   useEffect(() => {
     if (query.isSuccess) {
-      // Redirect to dashboard after successful verification
+      // Invalidate the auth query to force a refresh of the user state
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      // Short delay to allow the auth state to update
       setTimeout(() => {
         navigate("/dashboard");
-      }, 1500); // Short delay to show success message
+      }, 500);
     }
-  }, [query.isSuccess, navigate]);
+  }, [query.isSuccess, navigate, queryClient]);
 
   if (!token) {
     return (

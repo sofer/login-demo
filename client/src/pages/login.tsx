@@ -17,12 +17,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, LogOut } from "lucide-react";
+import { Mail, Loader2 } from "lucide-react";
 
 export default function Login() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const { user, isLoading, logoutMutation } = useAuth();
+  const { user, isLoading } = useAuth();
 
   const form = useForm<InsertUser>({
     resolver: zodResolver(insertUserSchema),
@@ -51,9 +51,13 @@ export default function Login() {
     },
   });
 
-  // If still loading auth state, show nothing to prevent flash
+  // Show loading state while checking authentication
   if (isLoading) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   // If user is authenticated, redirect to dashboard
