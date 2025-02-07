@@ -32,7 +32,7 @@ export default function Dashboard() {
     return null;
   }
 
-  if (query.isLoading) {
+  if (query.isLoading || !query.data) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <p>Loading...</p>
