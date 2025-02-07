@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Verify from "@/pages/verify";
 import Dashboard from "@/pages/dashboard";
+import { AuthProvider } from "@/hooks/use-auth";
 
 function Router() {
   return (
@@ -21,8 +22,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
+      <AuthProvider>
+        <Router />
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
