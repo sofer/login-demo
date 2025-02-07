@@ -51,34 +51,15 @@ export default function Login() {
     },
   });
 
+  // If still loading auth state, show nothing to prevent flash
   if (isLoading) {
     return null;
   }
 
+  // If user is authenticated, redirect to dashboard
   if (user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold">Welcome back!</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p>You are logged in as {user.email}</p>
-              <Button
-                onClick={() => logoutMutation.mutate()}
-                variant="outline"
-                className="w-full"
-                disabled={logoutMutation.isPending}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                {logoutMutation.isPending ? "Logging out..." : "Log out"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    navigate("/dashboard");
+    return null;
   }
 
   return (
